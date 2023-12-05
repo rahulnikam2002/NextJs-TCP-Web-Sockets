@@ -1,20 +1,19 @@
 import styles from "@/styles/Home.module.css";
 import { useEffect, useState } from "react";
 import io from "socket.io-client";
-
 let socket;
 
 export default function Home() {
-  const [data, setData] = useState("");
-  const [allMsg, setAllMsg] = useState([]);
+  const [data, setData] = useState();
+  const [allMsg, setAllMsg] = useState(["Hello"]);
 
   const sendMsg = () => {
     socket.emit("sendMessage", data);
     setData(""); // Clear input after sending
   };
 
-  useEffect(() => {
-    // Initialize socket only once
+  const connectTCP = async () => {
+    await fetch("/api/socket");
     if (!socket) {
       socket = io();
       socket.on("Receive-Message", (msg) => {
@@ -22,14 +21,11 @@ export default function Home() {
         setAllMsg((prev) => [...prev, msg]);
       });
     }
+  };
 
-    // Cleanup on component unmount
-    return () => {
-      if (socket) {
-        socket.disconnect();
-        socket = null;
-      }
-    };
+  useEffect(() => {
+    // Initialize socket only once
+    connectTCP();
   }, []);
 
   return (
@@ -38,9 +34,8 @@ export default function Home() {
       <input
         type="text"
         placeholder="Enter message"
-        value={data}
         onChange={(e) => setData(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && sendMsg()}
+        onKeyDown={(e) => e.key == "Enter" && sendMsg()}
       />
 
       {allMsg?.map((item, idx) => (
